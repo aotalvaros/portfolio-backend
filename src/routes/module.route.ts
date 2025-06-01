@@ -1,11 +1,10 @@
 import { Router } from 'express';
 import { getModuleStatuses, toggleModuleStatus } from '../controllers/module.controller';
+import { authMiddleware } from '../middleware/authMiddleware';
 
 export const moduleRouter = Router();
 
-// Ruta para obtener el estado de todos los módulos
 moduleRouter.get('/', getModuleStatuses);
+moduleRouter.post('/toggle', authMiddleware, toggleModuleStatus);
 
-// Ruta para cambiar el estado de un módulo (activo/inactivo)
-moduleRouter.post('/toggle', toggleModuleStatus);
 

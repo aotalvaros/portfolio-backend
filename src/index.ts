@@ -5,6 +5,7 @@ import { createServer } from 'http';
 import { initSocket } from './sockets';
 import { moduleRouter } from './routes/module.route';
 import { connectDB } from './config/db';
+import { authRouter } from './routes/auth.route';
 
 connectDB(); 
 
@@ -21,6 +22,7 @@ app.use(express.json());
 // Usa el router
 app.use('/contact', contactRouter); // ✅ esto es importante
 app.use('/modules', moduleRouter);
+app.use('/auth', authRouter);
 
 app.get('/', (req, res) => {
   res.send('🚀 API del portafolio corriendo correctamente.');
