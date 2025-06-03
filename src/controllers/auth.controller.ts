@@ -8,16 +8,28 @@ export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
-  if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });
+  if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
 
   const match = await comparePassword(password, user.password ?? '');
-  if (!match) return res.status(401).json({ error: 'Credenciales inválidas' });
+  if (!match) return res.status(401).json({ error: 'Contraseña incorrecta' });
 
-  const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET!, {
+  const token = jwt.sign({ 
+    id: user._id, 
+    role: user.role,
+    email: user.email,
+    name: user.name,
+    createdAt: user.createdAt,
+    avatar: user.avatar,
+    permissions: user.permissions,
+  }, process.env.JWT_SECRET!, {
     expiresIn: '1h',
   });
 
-  return res.json({ token });
+  return res.json({ 
+    token,
+    status: 'success',
+    message: 'Inicio de sesión exitoso',
+  });
 };
 
 /*Esta función login es un controlador para el endpoint de inicio de sesión en una API construida con Express y TypeScript.
