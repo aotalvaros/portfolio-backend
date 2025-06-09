@@ -1,8 +1,9 @@
-// src/controllers/auth.controller.ts
+
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { comparePassword } from '../utils/hash';
 import { User } from '../models/module.user';
+import crypto from 'crypto';
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -10,23 +11,37 @@ export const login = async (req: Request, res: Response) => {
   const user = await User.findOne({ email });
   if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
 
-  const match = await comparePassword(password, user.password ?? '');
-  if (!match) return res.status(401).json({ error: 'Contraseña incorrecta' });
 
-  const token = jwt.sign({ 
-    id: user._id, 
+  const match = await comparePassword(password, user.password ?? '');
+  if (!match) {
+    return res.status(401).json({ error: 'Contraseña incorrecta' });
+  }
+
+  const tokenPayload = {
+    id: user._id,
     role: user.role,
     email: user.email,
     name: user.name,
     createdAt: user.createdAt,
     avatar: user.avatar,
     permissions: user.permissions,
-  }, process.env.JWT_SECRET!, {
+  };
+
+  const token = jwt.sign(tokenPayload, process.env.JWT_SECRET!, {
     expiresIn: '1h',
   });
 
-  return res.json({ 
+  // ✅ Generar y guardar refreshToken si no existe
+  const refreshToken = user.refreshToken || crypto.randomBytes(40).toString('hex');
+
+  if (!user.refreshToken) {
+    user.refreshToken = refreshToken;
+    await user.save(); // Guardamos el refreshToken
+  }
+
+  return res.status(200).json({
     token,
+    refreshToken,
     status: 'success',
     message: 'Inicio de sesión exitoso',
   });

@@ -4,4 +4,5 @@ export const moduleStatus: Record<string, boolean> = {
   'nasaGallery': true,
   'contact': false,
   'allAplications': false,
+  'login': false
 };
