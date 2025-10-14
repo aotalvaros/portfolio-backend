@@ -1,37 +1,100 @@
 import { Request, Response } from 'express';
 import { ModuleStatus } from '../models/moduleStatus.model';
 import { getIO } from '../sockets';
+import { cache } from '../utils/cache';
+
+const CACHE_KEY = 'module-statuses';
+const CACHE_TTL = 30000; // 30 segundos
 
 export const toggleModuleStatus = async (req: Request, res: Response) => {
-  const { moduleName, status } = req.body;
-
-  if (!moduleName || typeof status !== 'boolean') {
-    return res.status(400).json({ error: 'Parámetros inválidos' });
-  }
-
+  const io = getIO();
   try {
-    const updated = await ModuleStatus.findOneAndUpdate(
+    const { moduleName } = req.body;
+
+    const module = await ModuleStatus.findOneAndUpdate(
       { moduleName },
-      { isActive: status },
-      { new: true, upsert: true }
+      [{ $set: { isActive: { $not: '$isActive' } } }],
+      { new: true, lean: true }
     );
 
-    // Emitimos a los clientes el nuevo estado
-    const io = getIO();
-    io.emit('update-module', { moduleName, status });
+    if (!module) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Module not found'
+      });
+    }
 
-    return res.status(200).json({ message: 'Estado actualizado', data: updated });
+    // Limpiar caché cuando hay cambios
+    cache.delete(CACHE_KEY);
+    console.log('Cache cleared due to module status change');
+
+    // Emitir cambio por Socket.IO
+    io.emit('moduleStatusChanged', {
+      moduleName,
+      isActive: module.isActive
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: module
+    });
+
   } catch (error) {
-    return res.status(500).json({ error: 'Error en la base de datos' });
+    console.error('Error toggling module status:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error toggling module status'
+    });
   }
 };
 
-export const getModuleStatuses = async (_req: Request, res: Response) => {
+export const getModuleStatuses = async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  
   try {
-    const modules = await ModuleStatus.find();
-    return res.status(200).json(modules);
+    // 1. Intentar obtener del caché primero
+    const cachedData = cache.get(CACHE_KEY);
+    if (cachedData) {
+      console.log(`Cache hit for modules - Response time: ${Date.now() - startTime}ms`);
+      return res.status(200).json({
+        status: 'success',
+        data: cachedData,
+        cached: true,
+        responseTime: Date.now() - startTime
+      });
+    }
+
+    // 2. Si no está en caché, consultar BD con optimizaciones
+    console.log('Cache miss - Querying database...');
+    
+    const modules = await ModuleStatus.find({})
+      .select('moduleName isActive name') // Solo campos necesarios
+      .lean() // Retorna objetos JS planos (más rápido)
+      .maxTimeMS(5000) // Timeout de 5 segundos
+      .exec();
+
+    // 3. Guardar en caché
+    cache.set(CACHE_KEY, modules, CACHE_TTL);
+
+    const responseTime = Date.now() - startTime;
+    console.log(`Database query completed - Response time: ${responseTime}ms`);
+
+    res.status(200).json({
+      status: 'success',
+      data: modules,
+      cached: false,
+      responseTime
+    });
+
   } catch (error) {
-    return res.status(500).json({ error: 'Error al obtener los estados' });
+    const responseTime = Date.now() - startTime;
+    console.error(`Error getting module statuses (${responseTime}ms):`, error);
+    
+    res.status(500).json({
+      status: 'error',
+      message: 'Error retrieving module statuses',
+      responseTime
+    });
   }
 };
 
