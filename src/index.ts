@@ -44,6 +44,26 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Endpoint específico para external keep-alive services
+app.get('/ping', async (req, res) => {
+  try {
+    // Realizar ping ligero a MongoDB cuando se recibe ping externo
+    const { MongoDBKeepAliveService } = await import('./services/mongodb-keepalive.service');
+    const dbStatus = await MongoDBKeepAliveService.pingDatabase();
+    
+    res.status(200).json({ 
+      status: 'pong',
+      database: dbStatus ? 'connected' : 'disconnected',
+      timestamp: new Date().toISOString(),
+      source: 'external-ping'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 
 // Usa el router
 app.use('/contact', contactRouter); // ✅ esto es importante

@@ -1,396 +1,376 @@
-# Portfolio Backend API 🚀
+# Backend API - Sistema de Gestión de Módulos
 
-Backend RESTful API con WebSockets para sistema de gestión de portafolio web. Incluye autenticación JWT, sistema de contacto por email, gestión de módulos en tiempo real y optimizaciones de rendimiento para producción.
+## 📋 Descripción
 
-## 🏗️ **Arquitectura del Sistema**
+Sistema backend robusto desarrollado con Node.js, Express y TypeScript que proporciona gestión de módulos, autenticación JWT, comunicación en tiempo real y servicios de keep-alive para mantener la conectividad con MongoDB.
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Frontend      │◄──►│  Backend API     │◄──►│   MongoDB       │
-│   (React/Next)  │    │  (Node.js/TS)    │    │   Database      │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                       │
-         └───────────────────────┘
-              Socket.IO
-           (Tiempo Real)
-```
+## 🏗️ Arquitectura
 
-## ⚡ **Características Principales**
-
-### 🔐 **Sistema de Autenticación**
-- **JWT Tokens** con expiración de 1 hora
-- **Refresh Tokens** para sesiones persistentes
-- **Bcrypt** para hash seguro de contraseñas
-- **Role-based access** (SuperAdmin)
-
-### 📊 **Gestión de Módulos**
-- **Control en tiempo real** del estado de módulos del portafolio
-- **Socket.IO** para updates instantáneos a todos los clientes
-- **Sistema de caché** para optimización de consultas
-- **Toggle dinámico** de activación/desactivación
-
-### 📧 **Sistema de Contacto**
-- **Rate limiting** (3 requests/minuto) anti-spam
-- **Validación robusta** con Zod schemas
-- **Email automático** via Resend API
-- **Formato HTML** profesional
-
-### 🚀 **Optimizaciones de Rendimiento**
-- **Caché en memoria** con TTL configurable
-- **Consultas MongoDB optimizadas** con `.lean()`
-- **Keep-alive service** para evitar cold starts en Render
-- **Connection pooling** y timeouts configurados
-- **Middleware de timing** para monitoreo
-
-## 🛠️ **Stack Tecnológico**
-
-| Categoría | Tecnologías |
-|-----------|-------------|
-| **Runtime** | Node.js, TypeScript |
-| **Framework** | Express.js |
-| **Base de Datos** | MongoDB + Mongoose |
-| **Tiempo Real** | Socket.IO |
-| **Autenticación** | JWT + Bcrypt |
-| **Email** | Resend API |
-| **Validación** | Zod |
-| **Deployment** | Render |
-
-## 📁 **Estructura del Proyecto**
-
+### Estructura del Proyecto
 ```
 src/
-├── 🚀 index.ts              # Servidor principal optimizado
-├── ⚙️  config/
-│   └── db.ts                # Conexión MongoDB con pooling
-├── 🎮 controllers/          # Lógica de negocio
-│   ├── auth.controller.ts   # Login + JWT
-│   ├── contact.controller.ts # Formulario contacto
-│   ├── module.controller.ts # Gestión módulos + caché
-│   └── refreshToken.controller.ts
-├── 🛡️  middleware/          # Seguridad y optimización
-│   ├── authMiddleware.ts    # Protección JWT
-│   ├── rateLimit.ts         # Anti-spam
-│   └── timing.ts            # Monitoreo rendimiento
-├── 📊 models/               # Schemas MongoDB
-│   ├── module.user.ts       # Usuarios admin
-│   └── moduleStatus.model.ts # Estados módulos
-├── 🛣️  routes/              # Definición APIs
-├── 🔌 sockets/              # WebSocket handlers
-├── 🎯 services/             # Servicios externos
-└── 🔧 utils/                # Utilidades + caché
+├── config/           # Configuración de base de datos y servicios
+├── controllers/      # Controladores de rutas
+├── domain/          # Lógica de dominio y casos de uso
+├── middleware/      # Middlewares personalizados
+├── models/          # Modelos de MongoDB
+├── presentation/    # Capa de presentación y servicios cron
+├── routes/          # Definición de rutas
+├── services/        # Servicios de negocio y keep-alive
+├── sockets/         # Configuración de WebSockets
+└── utils/           # Utilidades y helpers
 ```
 
-## 🚀 **Instalación y Configuración**
+## 🚀 Características Principales
 
-### **1. Clonar Repositorio**
+### ✅ **Funcionalidades Implementadas**
+
+- **🔐 Autenticación JWT Completa**
+  - Login/Logout con tokens de acceso y refresh
+  - Middleware de autenticación robusto
+  - Gestión segura de sesiones
+
+- **📊 Gestión de Módulos**
+  - CRUD completo de módulos
+  - Control de estado (activo/inactivo)
+  - Modelo [`ModuleStatus`](src/models/moduleStatus.model.ts) para persistencia
+
+- **⚡ Comunicación en Tiempo Real**
+  - WebSockets configurados
+  - Notificaciones instantáneas
+
+- **🛡️ Seguridad y Middleware**
+  - Rate limiting implementado
+  - Middleware de timing para monitoreo
+  - Protección de rutas sensibles
+
+- **🔄 Keep-Alive Inteligente**
+  - Cron jobs para mantener MongoDB activo
+  - Prevención de cold starts en planes gratuitos
+  - Monitoreo de salud de la base de datos
+
+### 🆕 **Nuevas Implementaciones**
+
+#### **Sistema de Keep-Alive para MongoDB**
+```typescript
+// Servicio automático cada 4 horas
+const keepAliveService = KeepAliveService.getInstance();
+keepAliveService.startMongoDBKeepAlive();
+```
+
+- **Cron Job Principal**: Cada 4 horas (`0 */4 * * *`)
+- **Health Check**: Cada 30 minutos (`*/30 * * * *`)
+- **Logging detallado**: Winston para monitoreo
+- **Graceful shutdown**: Cierre limpio de servicios
+
+#### **Servicios de Monitoreo**
+- [`MongoDBKeepAliveService`](src/services/mongodb-keepalive.service.ts): Ping a base de datos
+- [`KeepAliveService`](src/services/keep-alive.service.ts): Gestión centralizada de cron jobs
+- Endpoint `/health`: Estado del sistema en tiempo real
+
+## 🛠️ Tecnologías
+
+- **Runtime**: Node.js + TypeScript
+- **Framework**: Express.js
+- **Base de Datos**: MongoDB con Mongoose
+- **Autenticación**: JWT (jsonwebtoken)
+- **WebSockets**: Socket.io
+- **Cron Jobs**: node-cron
+- **Logging**: Winston
+- **Validación**: Joi/Zod (recomendado)
+
+## 📦 Instalación
+
 ```bash
+# Clonar el repositorio
 git clone <repository-url>
-cd portfolio-backend
-```
 
-### **2. Instalar Dependencias**
-```bash
-npm install
-```
-
-### **3. Variables de Entorno**
-Crear archivo `.env`:
-```env
-# Base de Datos
-MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/portfolio
-
-# JWT
-JWT_SECRET=tu-jwt-secret-muy-seguro
-JWT_REFRESH_SECRET=tu-refresh-secret
-
-# Email Service
-RESEND_API_KEY=re_tu-resend-api-key
-
-# Servidor
-PORT=4000
-NODE_ENV=development
-
-# Optimizaciones (Producción)
-MONGODB_MAX_POOL_SIZE=10
-CACHE_TTL=30000
-```
-
-### **4. Scripts Disponibles**
-
-| Comando | Descripción |
-|---------|-------------|
-| `npm run dev` | **Desarrollo** con hot reload |
-| `npm run build` | **Compilar** TypeScript |
-| `npm start` | **Ejecutar** versión compilada |
-| `npm run hash` | **Generar** hash de contraseña |
-
-## 📡 **Endpoints API**
-
-### **🔐 Autenticación**
-```http
-POST /auth/login
-Content-Type: application/json
-{
-  "email": "admin@portfolio.com",
-  "password": "password"
-}
-
-POST /auth/refresh-token
-Content-Type: application/json
-{
-  "refreshToken": "jwt-refresh-token"
-}
-```
-
-### **📊 Gestión de Módulos**
-```http
-# Obtener estados (público, con caché)
-GET /modules
-Response: {
-  "status": "success",
-  "data": [...],
-  "cached": true/false
-}
-
-# Toggle estado (requiere autenticación)
-POST /modules/toggle
-Authorization: Bearer jwt-token
-Content-Type: application/json
-{
-  "moduleName": "nasaGallery"
-}
-```
-
-### **📧 Contacto**
-```http
-POST /contact
-Content-Type: application/json
-{
-  "name": "Juan Pérez",
-  "email": "juan@example.com",
-  "message": "Mensaje de contacto aquí..."
-}
-```
-
-### **💚 Health Check**
-```http
-GET /health
-Response: {
-  "status": "ok",
-  "timestamp": "2024-01-01T12:00:00.000Z"
-}
-```
-
-## 🔌 **WebSocket Events**
-
-### **Cliente → Servidor**
-```javascript
-// Conexión automática
-socket.on('connect', () => {
-  console.log('Conectado al servidor');
-});
-```
-
-### **Servidor → Cliente**
-```javascript
-// Estado inicial al conectar
-socket.on('initialModuleStatuses', (modules) => {
-  console.log('Estados iniciales:', modules);
-});
-
-// Cambios en tiempo real
-socket.on('moduleStatusChanged', ({ moduleName, isActive }) => {
-  console.log(`${moduleName}: ${isActive ? 'Activado' : 'Desactivado'}`);
-});
-```
-
-## 🚀 **Deployment en Producción**
-
-### **Render.com (Actual)**
-```bash
-# URL de Producción
-https://portfolio-backend-1-kacy.onrender.com
-
-# Configuración automática con:
-- Build Command: npm run build
-- Start Command: npm start
-- Node.js 18+
-```
-
-### **Variables de Entorno en Render**
-```env
-NODE_ENV=production
-MONGODB_URI=mongodb+srv://...
-JWT_SECRET=production-secret
-RESEND_API_KEY=re_...
-PORT=4000
-```
-
-### **Optimizaciones de Producción Activas**
-
-#### 🎯 **Sistema de Caché**
-- **TTL**: 30 segundos para consultas de módulos
-- **Invalidación**: Automática en cambios de estado
-- **Memoria**: Caché en RAM para máximo rendimiento
-
-#### ⚡ **Keep-Alive Service**
-```javascript
-// Ping cada 14 minutos para evitar sleep de Render
-setupKeepAlive('https://portfolio-backend-1-kacy.onrender.com/health');
-```
-
-#### 🔍 **Monitoreo de Rendimiento**
-```javascript
-// Logs automáticos de timing
-GET /modules - 200 - 45ms ✅
-POST /modules/toggle - 200 - 120ms ⚠️
-SLOW REQUEST: POST /contact took 1200ms 🐌
-```
-
-#### 🏎️ **Consultas Optimizadas**
-```javascript
-// Mongoose optimizado
-ModuleStatus.find({})
-  .select('moduleName isActive name')  // Solo campos necesarios
-  .lean()                             // Objetos JS puros
-  .maxTimeMS(5000);                   // Timeout 5s
-```
-
-## 📊 **Métricas de Rendimiento**
-
-### **Antes de Optimizaciones**
-- `/modules`: ~2-5 segundos (cold start)
-- Consultas BD: ~800-1500ms
-- Memory usage: Alto por objetos Mongoose
-
-### **Después de Optimizaciones**
-- `/modules`: ~50-200ms (con caché)
-- Consultas BD: ~100-300ms (con .lean())
-- Memory usage: Reducido 60%
-- Cold starts: Eliminados con keep-alive
-
-## 🔧 **Desarrollo Local**
-
-### **Configuración Inicial**
-```bash
-# 1. Instalar dependencias
+# Instalar dependencias
 npm install
 
-# 2. Configurar MongoDB local o Atlas
-# 3. Configurar variables .env
-# 4. Iniciar en desarrollo
+# Configurar variables de entorno
+cp .env.example .env
+
+# Ejecutar en desarrollo
 npm run dev
 
-# El servidor estará en http://localhost:4000
+# Ejecutar en producción
+npm run build
+npm start
 ```
 
-### **Testing WebSockets**
+## 🔧 Configuración
+
+### Variables de Entorno
+```env
+NODE_ENV=development
+PORT=4000
+JWT_SECRET=your-super-secret-jwt-key
+JWT_REFRESH_SECRET=your-refresh-secret
+DB_URI=mongodb://localhost:27017/your-database
+API_BASE_URL=http://localhost:4000
+LOG_LEVEL=info
+```
+
+### Base de Datos
+El sistema se conecta automáticamente a MongoDB al iniciar. La configuración se encuentra en [`config/db.ts`](src/config/db.ts).
+
+## 🔌 API Endpoints
+
+### Autenticación
+- `POST /auth/login` - Iniciar sesión
+- `POST /auth/logout` - Cerrar sesión
+- `POST /auth/refresh` - Renovar token
+
+### Módulos
+- `GET /modules` - Listar módulos
+- `POST /modules` - Crear módulo
+- `PUT /modules/:id` - Actualizar módulo
+- `DELETE /modules/:id` - Eliminar módulo
+
+### Sistema
+- `GET /health` - Estado detallado del sistema y jobs activos
+- `GET /ping` - Keep-alive ligero para servicios externos (UptimeRobot)
+
+## 🔄 Keep-Alive System
+
+### ¿Por qué Keep-Alive?
+MongoDB Atlas (plan gratuito) entra en "hibernación" después de períodos de inactividad, causando cold starts que pueden tomar 10-30 segundos. **Render también duerme servicios gratuitos** después de 15 minutos de inactividad.
+
+### 🚀 **Estrategia de Doble Keep-Alive**
+
+#### **1. Keep-Alive Interno (Cron Jobs)**
+- **Función**: Mantiene MongoDB activo cuando el servidor está despierto
+- **Programación**: Cada 2 horas (`0 */2 * * *`)
+- **Limitación**: No funciona si Render está dormido
+
+#### **2. Keep-Alive Externo (UptimeRobot)**
+- **Función**: Despierta Render + mantiene MongoDB activo
+- **Endpoint**: `GET /ping` (optimizado para servicios externos)
+- **Frecuencia**: Cada 10 minutos
+- **Ventaja**: Funciona 24/7, nunca duerme
+
+### 🔧 **Configuración Recomendada**
+
+#### **UptimeRobot Setup:**
+```
+URL: https://tu-app.onrender.com/ping
+Método: GET
+Intervalo: 10 minutos
+Tipo: HTTP(s)
+```
+
+#### **Cron Jobs Internos:**
+```typescript
+// Keep-alive principal - cada 4 horas
+'0 */4 * * *'
+
+// Health check - cada 30 minutos  
+'*/30 * * * *'
+```
+
+### ⚡ **Flujo de Funcionamiento**
+```
+UptimeRobot (cada 10min)
+    ↓
+GET /ping
+    ↓  
+Render se despierta
+    ↓
+Ping a MongoDB
+    ↓
+MongoDB permanece activo
+    ↓
+Respuesta: { status: 'pong' }
+```
+
+## 📊 Logging y Monitoreo
+
+### Winston Logger
+- **Levels**: error, warn, info, debug
+- **Outputs**: Console (dev) + archivos (prod)
+- **Formato**: JSON estructurado con timestamps
+
+### Health Monitoring
+
+#### **Endpoint Completo:**
 ```bash
-# Abrir public/index.html en navegador
-# O usar cliente Socket.IO
-const socket = io('http://localhost:4000');
+curl http://localhost:4000/health
 ```
+Respuesta incluye:
+- Estado general del sistema
+- Uptime y uso de memoria
+- Estado de todos los cron jobs
+- Información detallada para debugging
 
-### **Crear Usuario Admin**
+#### **Endpoint Ligero (Keep-Alive):**
 ```bash
-# Generar hash de contraseña
-npm run hash
-
-# Insertar en MongoDB
-db.users.insertOne({
-  email: "admin@portfolio.com",
-  password: "hash-generado",
-  role: "superAdmin",
-  name: "Admin",
-  permissions: ["modules:toggle"]
-});
+curl http://localhost:4000/ping
 ```
-
-## 🛡️ **Seguridad Implementada**
-
-| Aspecto | Implementación |
-|---------|---------------|
-| **Contraseñas** | Bcrypt hash + salt |
-| **Tokens** | JWT con expiración |
-| **Rate Limiting** | 3 req/min en /contact |
-| **CORS** | Configurado por dominio |
-| **Validación** | Zod schemas estrictos |
-| **Timeouts** | MongoDB 5s máximo |
-
-## 🌐 **CORS y Dominios**
-
-```javascript
-// Desarrollo
-origin: ['http://localhost:3000']
-
-// Producción  
-origin: ['https://tu-frontend-url.com']
-```
-
-## 📈 **Escalabilidad**
-
-### **Actual (Render Free Tier)**
-- 1 instancia
-- 512MB RAM
-- Sleep después 15min inactividad
-
-### **Escalabilidad Futura**
-- **Horizontal**: Múltiples instancias + Load Balancer
-- **Caché**: Redis para caché distribuido  
-- **BD**: MongoDB Atlas con réplicas
-- **CDN**: Para assets estáticos
-
-## 🐛 **Debugging y Logs**
-
-### **Logs Estructurados**
-```javascript
-// Conexión BD
-MongoDB Connected: cluster0-shard-00-00.mongodb.net
-
-// Timing requests
-GET /modules - 200 - 45ms
-
-// Keep alive
-Keep alive ping: 200
-
-// Errores
-Error getting module statuses: MongoTimeoutError
-```
-
-### **Health Monitoring**
-```bash
-# Check health
-curl https://portfolio-backend-1-kacy.onrender.com/health
-
-# Response
+Respuesta optimizada:
+```json
 {
-  "status": "ok",
-  "timestamp": "2024-01-01T12:00:00.000Z"
+  "status": "pong",
+  "database": "connected",
+  "timestamp": "2025-12-16T10:30:00Z",
+  "source": "external-ping"
 }
 ```
 
-## 🤝 **Contribuir**
+## 🧪 Testing (Recomendado)
 
-1. Fork del proyecto
-2. Crear feature branch (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -am 'Añadir nueva funcionalidad'`)
-4. Push al branch (`git push origin feature/nueva-funcionalidad`)
+```bash
+# Ejecutar tests unitarios
+npm test
+
+# Tests de integración
+npm run test:integration
+
+# Coverage
+npm run test:coverage
+```
+
+## 🚀 Deployment
+
+### 🌐 **Render.com (Recomendado)**
+
+#### **1. Deploy en Render:**
+```bash
+# Build del proyecto
+npm run build
+
+# Iniciar en producción
+npm start
+```
+
+#### **2. Variables de Entorno en Render:**
+```env
+NODE_ENV=production
+PORT=10000
+API_BASE_URL=https://tu-app.onrender.com
+JWT_SECRET=tu-secret-super-seguro
+DB_URI=mongodb+srv://...
+LOG_LEVEL=info
+```
+
+#### **3. Configurar UptimeRobot (CRÍTICO):**
+1. Registrarse en [UptimeRobot](https://uptimerobot.com/) (gratis)
+2. Crear nuevo monitor:
+   - **URL**: `https://tu-app.onrender.com/ping`
+   - **Tipo**: HTTP(s)
+   - **Intervalo**: 10 minutos
+   - **Método**: GET
+3. ✅ **Resultado**: Render nunca dormirá, MongoDB siempre activo
+
+### 🔧 **Otras Plataformas**
+- Configurar `NODE_ENV=production`
+- Usar URLs de producción para `API_BASE_URL`
+- Si la plataforma tiene "sleep mode", configurar UptimeRobot
+
+## 📈 Métricas de Rendimiento
+
+### Middleware de Timing
+Cada request incluye headers de performance:
+- `X-Response-Time`: Tiempo de respuesta
+- Logging automático de requests lentos
+
+### Keep-Alive Stats
+- Tiempo promedio de respuesta de MongoDB
+- Rate de éxito de health checks
+- Estadísticas de cold starts evitados
+
+## 🔒 Seguridad
+
+### Implementado
+- ✅ Rate limiting
+- ✅ JWT authentication
+- ✅ CORS configurado
+- ✅ Middleware de autenticación
+
+### Recomendaciones Adicionales
+- [ ] Helmet.js para headers de seguridad
+- [ ] Validación de entrada con Joi/Zod
+- [ ] Sanitización de datos
+- [ ] HTTPS en producción
+
+## 🐛 Debugging
+
+### Logs de Keep-Alive
+```bash
+# Ver logs en tiempo real
+tail -f logs/combined.log | grep "keep-alive"
+
+# Logs de errores
+tail -f logs/error.log
+```
+
+### Troubleshooting MongoDB
+1. Verificar conectividad: `GET /health`
+2. Revisar logs de keep-alive
+3. Comprobar variables de entorno
+
+## 📝 Changelog
+
+### v2.1.0 - Doble Keep-Alive para Render
+- ➕ Endpoint `/ping` optimizado para servicios externos
+- ➕ Estrategia de doble keep-alive (interno + externo)
+- ➕ Integración perfecta con UptimeRobot
+- ➕ Solución completa para Render sleep mode
+- ➕ Documentación de setup para UptimeRobot
+- 🔧 Prevención total de cold starts
+
+### v2.0.0 - Keep-Alive Implementation
+- ➕ Sistema completo de keep-alive para MongoDB
+- ➕ Cron jobs inteligentes
+- ➕ Logging estructurado con Winston
+- ➕ Health monitoring endpoint
+- ➕ Graceful shutdown
+- 🔧 Optimización de performance
+
+### v1.0.0 - Initial Release
+- ✅ Autenticación JWT
+- ✅ CRUD de módulos
+- ✅ WebSockets
+- ✅ Rate limiting
+
+## 🤝 Contribución
+
+1. Fork el proyecto
+2. Crear rama para feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit cambios (`git commit -am 'Add nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
 5. Crear Pull Request
 
-## 📄 **Licencia**
+## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver archivo `LICENSE` para detalles.
+Este proyecto está bajo la licencia MIT. Ver [`LICENSE`](LICENSE) para más detalles.
+
+## 🆘 Soporte
+
+### 🐛 **Troubleshooting**
+
+#### **Problema: API lenta en primera carga**
+```bash
+# 1. Verificar si UptimeRobot está activo
+curl https://tu-app.onrender.com/ping
+
+# 2. Revisar logs de keep-alive
+# En Render dashboard → Runtime Logs
+```
+
+#### **Problema: MongoDB connection timeout**
+```bash
+# Verificar estado de la base de datos
+curl https://tu-app.onrender.com/health
+# Buscar "database": "connected"
+```
+
+### 📞 **Contacto**
+Para reportar bugs o solicitar features:
+- Crear issue en GitHub
+- Revisar logs en Render dashboard
+- Verificar `/health` y `/ping` endpoints
 
 ---
 
-## 🔗 **Enlaces Útiles**
-
-- **API en Producción**: https://portfolio-backend-1-kacy.onrender.com
-- **Health Check**: https://portfolio-backend-1-kacy.onrender.com/health
-- **Documentación MongoDB**: https://mongoosejs.com/
-- **Socket.IO Docs**: https://socket.io/docs/
-- **Render Deployment**: https://render.com/docs
-
----
-
-**Desarrollado con ❤️ para un portafolio web moderno y eficiente**
+**Desarrollado con ❤️ usando Node.js + TypeScript**
