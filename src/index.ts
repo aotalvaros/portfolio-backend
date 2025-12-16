@@ -7,6 +7,7 @@ import { moduleRouter } from './routes/module.route';
 import { connectDB } from './config/db';
 import { authRouter } from './routes/auth.route';
 import { timingMiddleware } from './middleware/timing';
+import { KeepAliveService } from './services/keep-alive.service';
 
 connectDB(); 
 
@@ -32,11 +33,14 @@ app.use(express.json({ limit: '10mb' }));
 
 // Health check endpoint optimizado
 app.get('/health', (req, res) => {
+  const keepAliveService = KeepAliveService.getInstance();
+
   res.status(200).json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    memory: process.memoryUsage()
+    memory: process.memoryUsage(),
+    jobs: keepAliveService.getJobsStatus()
   });
 });
 
@@ -52,4 +56,11 @@ app.get('/', (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Servidor con sockets escuchando en el puerto ${PORT}`);
+
+  // Iniciar servicios de keep-alive
+  const keepAliveService = KeepAliveService.getInstance();
+  keepAliveService.startMongoDBKeepAlive();
+  keepAliveService.startHealthCheck();
+  
+  console.log('Keep-alive services started');
 });
