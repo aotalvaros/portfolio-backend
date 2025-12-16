@@ -17,7 +17,7 @@ export class KeepAliveService {
 
   startMongoDBKeepAlive(): void {
     // Cada 4 horas
-    const cronExpression = '0 */4 * * *'; // "0 minutos, cada 4 horas"
+    const cronExpression = '0 */2 * * *'; // "0 minutos, cada 4 horas"
     
     const job = CronService.createJob(
       cronExpression,
@@ -49,8 +49,8 @@ export class KeepAliveService {
   }
 
   startHealthCheck(): void {
-    // Health check más frecuente cada 30 minutos
-    const cronExpression = '*/30 * * * *'; // "cada 30 minutos"
+    // Health check más frecuente cada 10 minutos
+    const cronExpression = '*/10 * * * *'; // "cada 10 minutos"
     
     const job = CronService.createJob(
       cronExpression,
@@ -65,7 +65,7 @@ export class KeepAliveService {
 
     this.jobs.set('health-check', job);
     logger.info('Health check job started', { 
-      schedule: 'Every 30 minutes',
+      schedule: 'Every 10 minutes',
       cronExpression 
     });
   }
@@ -90,8 +90,8 @@ export class KeepAliveService {
   ¿Que hace este servicio?
   Este servicio gestiona tareas programadas (cron jobs) para mantener viva la conexión con MongoDB.
   Incluye dos trabajos principales:
-  1. Un trabajo que se ejecuta cada 4 horas para verificar la conexión a la base de datos y un endpoint relacionado.
-  2. Un trabajo de verificación de salud que se ejecuta cada 30 minutos para asegurar que la conexión a MongoDB sigue activa.
+  1. Un trabajo que se ejecuta cada 2 horas para verificar la conexión a la base de datos y un endpoint relacionado.
+  2. Un trabajo de verificación de salud que se ejecuta cada 10 minutos para asegurar que la conexión a MongoDB sigue activa.
 
   ¿Por qué es importante?
   Mantener viva la conexión con la base de datos es crucial para aplicaciones que dependen de MongoDB,
