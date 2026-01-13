@@ -3,19 +3,40 @@ import { ModuleStatus } from '../models/moduleStatus.model';
 import { getIO } from '../sockets';
 import { cache } from '../utils/cache';
 
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
+
 const CACHE_KEY = 'module-statuses';
 const CACHE_TTL = 30000; // 30 segundos
 
-export const toggleModuleStatus = async (req: Request, res: Response) => {
+export const toggleModuleStatus = async (req: AuthenticatedRequest, res: Response) => {
   const io = getIO();
   try {
     const { moduleName } = req.body;
+    const userId = req.user?.id; // Usuario autenticado del middleware
+
+    if (!userId) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'User not authenticated'
+      });
+    }
 
     const module = await ModuleStatus.findOneAndUpdate(
       { moduleName },
-      [{ $set: { isActive: { $not: '$isActive' } } }],
+      [{ $set: { 
+        isActive: { $not: '$isActive' },
+        isBlocked: { $not: '$isBlocked' },
+        lastModifiedAt: new Date(),
+        lastModifiedBy: userId
+      }}],
       { new: true, lean: true }
-    );
+    ).populate('lastModifiedBy', 'name email');
 
     if (!module) {
       return res.status(404).json({
@@ -31,7 +52,10 @@ export const toggleModuleStatus = async (req: Request, res: Response) => {
     // Emitir cambio por Socket.IO
     io.emit('moduleStatusChanged', {
       moduleName,
-      isActive: module.isActive
+      isActive: module.isActive,
+      isBlocked: module.isBlocked,
+      lastModifiedAt: module.lastModifiedAt,
+      lastModifiedBy: module.lastModifiedBy
     });
 
     res.status(200).json({
@@ -68,9 +92,10 @@ export const getModuleStatuses = async (req: Request, res: Response) => {
     console.log('Cache miss - Querying database...');
     
     const modules = await ModuleStatus.find({})
-      .select('moduleName isActive name') // Solo campos necesarios
-      .lean() // Retorna objetos JS planos (más rápido)
-      .maxTimeMS(5000) // Timeout de 5 segundos
+      .select('moduleName isActive name isBlocked lastModifiedAt lastModifiedBy')
+      .populate('lastModifiedBy', 'name email')
+      .lean()
+      .maxTimeMS(5000)
       .exec();
 
     // 3. Guardar en caché
