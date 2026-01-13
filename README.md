@@ -9,16 +9,19 @@ Sistema backend robusto desarrollado con Node.js, Express y TypeScript que propo
 ### Estructura del Proyecto
 ```
 src/
-├── config/           # Configuración de base de datos y servicios
-├── controllers/      # Controladores de rutas
+├── config/           # Configuración de base de datos
+├── controllers/      # Controladores de rutas (auth, modules, contact)
 ├── domain/          # Lógica de dominio y casos de uso
-├── middleware/      # Middlewares personalizados
-├── models/          # Modelos de MongoDB
+├── helpers/         # Funciones auxiliares
+├── middleware/      # Middlewares (auth, rate limit, timing)
+├── models/          # Modelos de MongoDB (User, ModuleStatus)
 ├── presentation/    # Capa de presentación y servicios cron
-├── routes/          # Definición de rutas
-├── services/        # Servicios de negocio y keep-alive
+├── routes/          # Definición de rutas (auth, modules, contact)
+├── schemas/         # Esquemas de validación (Zod)
+├── scripts/         # Scripts de migración y utilidades
+├── services/        # Servicios (keep-alive, email)
 ├── sockets/         # Configuración de WebSockets
-└── utils/           # Utilidades y helpers
+└── utils/           # Utilidades (cache, logger, hash)
 ```
 
 ## 🚀 Características Principales
@@ -32,7 +35,8 @@ src/
 
 - **📊 Gestión de Módulos**
   - CRUD completo de módulos
-  - Control de estado (activo/inactivo)
+  - Control de estado (activo/inactivo/bloqueado)
+  - Sistema de auditoría (quién y cuándo modificó)
   - Modelo [`ModuleStatus`](src/models/moduleStatus.model.ts) para persistencia
 
 - **⚡ Comunicación en Tiempo Real**
@@ -72,12 +76,13 @@ keepAliveService.startMongoDBKeepAlive();
 
 - **Runtime**: Node.js + TypeScript
 - **Framework**: Express.js
-- **Base de Datos**: MongoDB con Mongoose
+- **Base de Datos**: MongoDB Atlas con Mongoose
 - **Autenticación**: JWT (jsonwebtoken)
+- **Email**: Resend
 - **WebSockets**: Socket.io
 - **Cron Jobs**: node-cron
 - **Logging**: Winston
-- **Validación**: Joi/Zod (recomendado)
+- **Validación**: Zod
 
 ## 📦 Instalación
 
@@ -106,14 +111,20 @@ npm start
 NODE_ENV=development
 PORT=4000
 JWT_SECRET=your-super-secret-jwt-key
-JWT_REFRESH_SECRET=your-refresh-secret
-DB_URI=mongodb://localhost:27017/your-database
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/
 API_BASE_URL=http://localhost:4000
 LOG_LEVEL=info
+RESEND_API_KEY=your-resend-api-key
 ```
 
 ### Base de Datos
-El sistema se conecta automáticamente a MongoDB al iniciar. La configuración se encuentra en [`config/db.ts`](src/config/db.ts).
+El sistema se conecta automáticamente a MongoDB Atlas al iniciar. La configuración se encuentra en [`config/db.ts`](src/config/db.ts).
+
+### Migraciones
+Cuando agregues nuevos campos a los modelos, ejecuta:
+```bash
+npm run migrate:module-status
+```
 
 ## 🔌 API Endpoints
 
@@ -123,10 +134,32 @@ El sistema se conecta automáticamente a MongoDB al iniciar. La configuración s
 - `POST /auth/refresh` - Renovar token
 
 ### Módulos
-- `GET /modules` - Listar módulos
-- `POST /modules` - Crear módulo
-- `PUT /modules/:id` - Actualizar módulo
-- `DELETE /modules/:id` - Eliminar módulo
+- `GET /modules` - Listar módulos con información de auditoría
+- `POST /modules/toggle` - Cambiar estado de módulo (requiere autenticación)
+
+#### Respuesta de GET /modules:
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "moduleName": "nasaGallery",
+      "isActive": true,
+      "name": "Img desde marte",
+      "isBlocked": false,
+      "lastModifiedAt": "2025-01-16T15:30:45.123Z",
+      "lastModifiedBy": {
+        "_id": "683c83af62b3565e9ae648ac",
+        "name": "Andres Otalvaro",
+        "email": "andr3s.o7alvaro@gmail.com"
+      }
+    }
+  ]
+}
+```
+
+### Contacto
+- `POST /contact` - Enviar mensaje de contacto
 
 ### Sistema
 - `GET /health` - Estado detallado del sistema y jobs activos
@@ -220,14 +253,11 @@ Respuesta optimizada:
 ## 🧪 Testing (Recomendado)
 
 ```bash
-# Ejecutar tests unitarios
+# Ejecutar migración de base de datos
+npm run migrate:module-status
+
+# Ejecutar tests unitarios (pendiente implementar)
 npm test
-
-# Tests de integración
-npm run test:integration
-
-# Coverage
-npm run test:coverage
 ```
 
 ## 🚀 Deployment
@@ -283,15 +313,15 @@ Cada request incluye headers de performance:
 
 ### Implementado
 - ✅ Rate limiting
-- ✅ JWT authentication
+- ✅ JWT authentication con refresh tokens
 - ✅ CORS configurado
 - ✅ Middleware de autenticación
+- ✅ Validación de datos con Zod
 
 ### Recomendaciones Adicionales
 - [ ] Helmet.js para headers de seguridad
-- [ ] Validación de entrada con Joi/Zod
-- [ ] Sanitización de datos
-- [ ] HTTPS en producción
+- [ ] Sanitización de datos adicional
+- [ ] HTTPS en producción (Render lo provee automáticamente)
 
 ## 🐛 Debugging
 
@@ -310,6 +340,13 @@ tail -f logs/error.log
 3. Comprobar variables de entorno
 
 ## 📝 Changelog
+
+### v2.2.0 - Sistema de Auditoría de Módulos
+- ➕ Campos `lastModifiedAt` y `lastModifiedBy` en ModuleStatus
+- ➕ Campo `isBlocked` para bloquear módulos
+- ➕ Populate automático de información del usuario
+- ➕ Script de migración `npm run migrate:module-status`
+- 🔧 Respuestas del servicio incluyen auditoría completa
 
 ### v2.1.0 - Doble Keep-Alive para Render
 - ➕ Endpoint `/ping` optimizado para servicios externos
