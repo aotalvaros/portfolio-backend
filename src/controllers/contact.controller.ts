@@ -3,11 +3,12 @@ import { contactSchema } from '../schemas/contact.schema';
 import { validate } from '../utils/validate';
 import { sendContactEmail } from '../services/resend';
 
-export async function handleContact(req: Request, res: Response) {
+export async function handleContact(req: Request, res: Response): Promise<void> {
   const parsed = validate(contactSchema, req.body);
 
   if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error });
+    res.status(400).json({ error: parsed.error });
+    return;
   }
 
   const result = await sendContactEmail(
@@ -17,8 +18,9 @@ export async function handleContact(req: Request, res: Response) {
   );
 
   if (!result.success) {
-    return res.status(500).json({ error: 'No se pudo enviar el mensaje, por favor intenta más tarde' });
+    res.status(500).json({ error: 'No se pudo enviar el mensaje, por favor intenta más tarde' });
+    return;
   }
 
-  return res.status(200).json({ message: 'Mensaje enviado con éxito 🚀' });
+  res.status(200).json({ message: 'Mensaje enviado con éxito 🚀' });
 }

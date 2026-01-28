@@ -5,6 +5,7 @@ export interface IModuleStatus extends Document {
   isActive: boolean;
   name: string;
   isBlocked: boolean;
+  category: 'api' | 'feature' | 'component';
   lastModifiedAt: Date;
   lastModifiedBy: Types.ObjectId;
 }
@@ -14,6 +15,7 @@ const ModuleStatusSchema = new Schema<IModuleStatus>({
   isActive: { type: Boolean, default: true },
   name: { type: String, required: true },
   isBlocked: { type: Boolean, default: false },
+  category: { type: String, enum: ['api', 'feature', 'component'], required: true, default: 'feature' },
   lastModifiedAt: { type: Date, default: Date.now },
   lastModifiedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 });

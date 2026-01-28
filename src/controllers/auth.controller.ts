@@ -5,16 +5,19 @@ import { comparePassword } from '../utils/hash';
 import { User } from '../models/module.user';
 import crypto from 'crypto';
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
-  if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
-
+  if (!user) {
+    res.status(401).json({ error: 'Usuario no encontrado' });
+    return;
+  }
 
   const match = await comparePassword(password, user.password ?? '');
   if (!match) {
-    return res.status(401).json({ error: 'Contraseña incorrecta' });
+    res.status(401).json({ error: 'Contraseña incorrecta' });
+    return;
   }
 
   const tokenPayload = {
@@ -39,7 +42,7 @@ export const login = async (req: Request, res: Response) => {
     await user.save(); // Guardamos el refreshToken
   }
 
-  return res.status(200).json({
+  res.status(200).json({
     token,
     refreshToken,
     status: 'success',

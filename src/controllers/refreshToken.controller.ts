@@ -1,13 +1,19 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import { User } from '../models/module.user';
-export const refreshToken = async (req: Request, res: Response) => {
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
   const { refreshToken } = req.body;
-   if (!refreshToken) return res.status(400).json({ error: 'Refresh token requerido' });
+  if (!refreshToken) {
+    res.status(400).json({ error: 'Refresh token requerido' });
+    return;
+  }
 
   // Busca el usuario por el refreshToken
   const user = await User.findOne({ refreshToken });
-  if (!user) return res.status(401).json({ error: 'Refresh token inválido' });
+  if (!user) {
+    res.status(401).json({ error: 'Refresh token inválido' });
+    return;
+  }
 
   const token = jwt.sign({
     id: user._id,
@@ -21,5 +27,5 @@ export const refreshToken = async (req: Request, res: Response) => {
     expiresIn: '1h',
   });
 
-  return res.json({ token });
+  res.json({ token });
 };
