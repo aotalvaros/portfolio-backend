@@ -40,8 +40,10 @@ src/
   - Modelo [`ModuleStatus`](src/models/moduleStatus.model.ts) para persistencia
 
 - **⚡ Comunicación en Tiempo Real**
-  - WebSockets configurados
-  - Notificaciones instantáneas
+  - WebSockets configurados con Socket.io
+  - Evento `update-module` para sincronización frontend-backend
+  - Estado inicial de módulos (`init-module-status`)
+  - Notificaciones instantáneas de cambios
 
 - **🛡️ Seguridad y Middleware**
   - Rate limiting implementado
@@ -124,6 +126,27 @@ El sistema se conecta automáticamente a MongoDB Atlas al iniciar. La configurac
 Cuando agregues nuevos campos a los modelos, ejecuta:
 ```bash
 npm run migrate:module-status
+```
+
+## 🔌 WebSockets Events
+
+### Eventos del Servidor
+- `init-module-status` - Estado inicial de todos los módulos al conectar
+- `update-module` - Cambio de estado de módulo en tiempo real
+
+#### Estructura del evento `update-module`:
+```json
+{
+  "moduleName": "nasaGallery",
+  "isActive": true,
+  "isBlocked": false,
+  "lastModifiedAt": "2025-01-16T15:30:45.123Z",
+  "lastModifiedBy": {
+    "_id": "683c83af62b3565e9ae648ac",
+    "name": "Andres Otalvaro",
+    "email": "andr3s.o7alvaro@gmail.com"
+  }
+}
 ```
 
 ## 🔌 API Endpoints
@@ -340,6 +363,12 @@ tail -f logs/error.log
 3. Comprobar variables de entorno
 
 ## 📝 Changelog
+
+### v2.3.0 - WebSocket Event Synchronization
+- 🔧 Evento WebSocket `update-module` sincronizado con frontend
+- 🔧 Corrección de nombres de eventos para comunicación en tiempo real
+- ➕ Documentación completa de eventos WebSocket
+- ✅ Integración perfecta frontend-backend para cambios de módulos
 
 ### v2.2.0 - Sistema de Auditoría de Módulos
 - ➕ Campos `lastModifiedAt` y `lastModifiedBy` en ModuleStatus

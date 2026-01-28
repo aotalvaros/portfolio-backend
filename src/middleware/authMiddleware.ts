@@ -14,9 +14,12 @@ interface AuthenticatedRequest extends Request {
 /*Este middleware asegura que solo los usuarios con un token JWT válido puedan acceder a ciertas rutas, 
   y proporciona la información del usuario autenticado al resto de la aplicación. */
 
-export const authMiddleware = ( req: AuthenticatedRequest, res: Response, next: NextFunction ) => {
+export const authMiddleware = ( req: AuthenticatedRequest, res: Response, next: NextFunction ): void  => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
+  if (!authHeader){
+    res.status(401).json({ error: 'No autorizado' });
+    return;
+  }
 
   const token = authHeader.split(' ')[1];
   try {
@@ -25,7 +28,8 @@ export const authMiddleware = ( req: AuthenticatedRequest, res: Response, next: 
     next();
   } catch (err) {
     if (err instanceof JsonWebTokenError) {
-      return res.status(401).json({ error: 'Token inválido' });
+      res.status(401).json({ error: 'Token inválido' });
+      return 
     }
     throw err; // Otros errores (por ejemplo, problemas de configuración) no se silencian y pueden ser manejados por un middleware global de errores.
   }
