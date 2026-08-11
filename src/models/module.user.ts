@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['superAdmin'], default: 'superAdmin' },
   name: { type: String, required: true },
   avatar: { type: String, default: '' },
+  phone: { type: String, default: '' },
   permissions: { type: [], default: [] },
   createdAt: { type: Date, default: Date.now },
   isVerified: { type: Boolean, default: false },

@@ -10,13 +10,13 @@ Sistema backend robusto desarrollado con Node.js, Express y TypeScript que propo
 ```
 src/
 ├── config/           # Configuración de base de datos
-├── controllers/      # Controladores de rutas (auth, modules, contact)
+├── controllers/      # Controladores de rutas (auth, modules, contact, user)
 ├── domain/          # Lógica de dominio y casos de uso
 ├── helpers/         # Funciones auxiliares
 ├── middleware/      # Middlewares (auth, rate limit, timing)
 ├── models/          # Modelos de MongoDB (User, ModuleStatus)
 ├── presentation/    # Capa de presentación y servicios cron
-├── routes/          # Definición de rutas (auth, modules, contact)
+├── routes/          # Definición de rutas (auth, modules, contact, user)
 ├── schemas/         # Esquemas de validación (Zod)
 ├── scripts/         # Scripts de migración y utilidades
 ├── services/        # Servicios (keep-alive, email)
@@ -32,6 +32,11 @@ src/
   - Login/Logout con tokens de acceso y refresh
   - Middleware de autenticación robusto
   - Gestión segura de sesiones
+
+- **👤 Gestión de Perfil de Usuario**
+  - Obtener perfil autenticado
+  - Actualizar datos personales (nombre, avatar, teléfono)
+  - Cambiar contraseña de forma segura con validación
 
 - **📊 Gestión de Módulos**
   - CRUD completo de módulos
@@ -183,6 +188,11 @@ npm run migrate:module-status
 
 ### Contacto
 - `POST /contact` - Enviar mensaje de contacto
+
+### Perfil de Usuario
+- `GET /user/profile` - Obtener perfil del usuario autenticado (requiere token)
+- `PATCH /user/profile` - Actualizar nombre, avatar y teléfono (requiere token)
+- `PATCH /user/password` - Cambiar contraseña (requiere token)
 
 ### Sistema
 - `GET /health` - Estado detallado del sistema y jobs activos
