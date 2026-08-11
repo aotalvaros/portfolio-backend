@@ -21,8 +21,8 @@ initSocket(server);
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://tu-frontend-url.com'] 
-    : ['http://localhost:3000', 'http://localhost:5173'],
+    ? ['https://andr3s-o7alvaro-portafolio.vercel.app'] 
+    : ['http://localhost:3000', 'http://localhost:5173', 'https://andr3s-o7alvaro-portafolio.vercel.app'],
   credentials: true
 }));
 
