@@ -8,6 +8,7 @@ import { connectDB } from './config/db';
 import { authRouter } from './routes/auth.route';
 import { timingMiddleware } from './middleware/timing';
 import { KeepAliveService } from './services/keep-alive.service';
+import userRoutes from './routes/user.routes';
 
 connectDB(); 
 
@@ -17,9 +18,6 @@ const PORT = process.env.PORT ?? 4000;
 const server = createServer(app); 
 
 initSocket(server); 
-
-app.use(cors());
-app.use(express.json());
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
@@ -69,6 +67,7 @@ app.get('/ping', async (req, res) => {
 app.use('/contact', contactRouter); // ✅ esto es importante
 app.use('/modules', moduleRouter);
 app.use('/auth', authRouter);
+app.use('/user', userRoutes)
 
 app.get('/', (req, res) => {
   res.send('🚀 API del portafolio corriendo correctamente.');
