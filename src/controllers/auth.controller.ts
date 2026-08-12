@@ -8,9 +8,17 @@ import crypto from 'crypto';
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: String(email).trim().toLowerCase() });
   if (!user) {
     res.status(401).json({ error: 'Usuario no encontrado' });
+    return;
+  }
+
+  if (user.isBlocked) {
+    res.status(403).json({
+      status: 'error',
+      message: 'Usuario bloqueado. Contacta al administrador.',
+    });
     return;
   }
 
@@ -28,25 +36,30 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     createdAt: user.createdAt,
     avatar: user.avatar,
     permissions: user.permissions,
+    idUsuario: user.idUsuario,
+    mustChangePassword: user.mustChangePassword,
   };
 
   const token = jwt.sign(tokenPayload, process.env.JWT_SECRET!, {
     expiresIn: '1h',
   });
 
-  // ✅ Generar y guardar refreshToken si no existe
   const refreshToken = user.refreshToken || crypto.randomBytes(40).toString('hex');
 
   if (!user.refreshToken) {
     user.refreshToken = refreshToken;
-    await user.save(); // Guardamos el refreshToken
+    await user.save();
   }
 
   res.status(200).json({
     token,
     refreshToken,
     status: 'success',
-    message: 'Inicio de sesión exitoso',
+    message: user.mustChangePassword
+      ? 'Inicio de sesión exitoso. Debe cambiar su contraseña al entrar al sistema.'
+      : 'Inicio de sesión exitoso',
+    mustChangePassword: user.mustChangePassword,
+    idUsuario: user.idUsuario,
   });
 };
 
